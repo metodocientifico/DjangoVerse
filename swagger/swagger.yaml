@@ -1,0 +1,13 @@
+openapi: 3.0.0
+info:
+  title: API Documentation
+  description: API documentation for DjangoVerse
+  version: 1.0.0
+
+paths:
+  /example:
+    get:
+      summary: Example API endpoint
+      responses:
+        '200':
+          description: Successful response

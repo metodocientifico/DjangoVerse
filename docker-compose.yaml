@@ -1,0 +1,75 @@
+services:
+  django:
+    build: ./app
+    container_name: django-app
+    volumes:
+      - ./app:/usr/src/app
+    env_file:
+      - ./.env
+    working_dir: /usr/src/app
+    command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:13
+    container_name: postgres-db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: django_db
+      POSTGRES_USER: django_user
+      POSTGRES_PASSWORD: django_password
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  celery:
+    build: ./app
+    container_name: celery
+    volumes:
+      - ./app:/usr/src/app
+    working_dir: /usr/src/app
+    command: bash -c "celery -A myapp worker --loglevel=info"
+    depends_on:
+      - django
+      - redis
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - django
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    container_name: swagger-ui
+    environment:
+      SWAGGER_JSON: /api-spec/swagger.yaml
+    volumes:
+      - ./swagger:/api-spec
+    ports:
+      - "8081:8080"
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
